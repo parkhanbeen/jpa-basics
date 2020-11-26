@@ -30,50 +30,29 @@ public class jpaMain {
             em.flush();
             em.clear();
 
-            // JPQL 타입 표현
-            // ENUM 타입은 패키지명을 모두 포함한다.
-            String query = "select m.username, 'HELLO', true From Member m " +
-                    "where m.type = :userType";
-            List<Object[]> result = em.createQuery(query)
-                    .setParameter("userType",MemberType.ADMIN)
+            // JPQL 기본 함수
+            String query = "select 'a' || 'b' from Member m ";   // 하이버네이트에서 지원하는 문법
+
+            String concatQuery = "select concat('a', 'b') from Member m "; // concat 데이터베이스 표준 문법
+
+            String subQuery = "select substring(m.username, 2, 3) from Member m "; // 2번째 부터 3개를 짤라라
+
+            String locateQuery = "select locate('de','abcdefg') from Member m "; // de가 몇번째인지 찾아라
+
+            String sizeQuery = "select size(t.members) from Team t "; // 컬렉션의 크기를 돌려준다
+
+            @OrderColumn
+            String indexQuery = "select index(t.members) from Team t "; // 컬렉션의 위치 값을 구할 때 사용 거의 안쓴다
+
+
+            // 사용자 정의 함수 호출
+            String functionQuery = "select function('grop_concat', m.username) from Member m "; // 직접 함수를 등록하여 사용가능하다
+
+
+            List<String> functionList = em.createQuery(functionQuery,String.class)
                     .getResultList();
 
-            for (Object[] objects : result) {
-                System.out.println("objects[0] = " + objects[0]);
-                System.out.println("objects[0] = " + objects[1]);
-                System.out.println("objects[0] = " + objects[2]);
-
-            }
-
-            // 조건식 - case식
-            String caseQuery =
-                    "select " +
-                            "case when m.age <= 10 then '학생요금' " +
-                            "     when m.age >= 60 then '경로요금' " +
-                            "     else '일반요금'" +
-                            "end " +
-                            "from Member m";
-            List<String> resultList = em.createQuery(caseQuery,String.class)
-                    .getResultList();
-
-            for (String s : resultList) {
-                System.out.println("s = " + s);
-
-            }
-
-            // 모든 db에서 사용가능.
-            // COALESCE: 하나씩 조회해서 null이 아니면 반환
-            String coalQuery = "select coalesce(m.username, '이름 없는 회원') as username from Member m ";
-            List<String> coalList = em.createQuery(coalQuery,String.class)
-                    .getResultList();
-
-
-            // NULLIF: 두 값이 같으면 null 반환, 다르면 첫번째 값 반환
-            String nullifQuery = "select nullif(m.username, '관리자') as username from Member m ";
-            List<String> nullifList = em.createQuery(nullifQuery,String.class)
-                    .getResultList();
-
-            for (String s : nullifList) {
+            for (String s : functionList) {
                 System.out.println("s = " + s);
 
             }

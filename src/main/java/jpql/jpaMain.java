@@ -15,49 +15,60 @@ public class jpaMain {
 
         try{
 
-            Member member = new Member();
-            member.setUsername("member1");
-            member.setAge(10);
-            em.persist(member);
+            for(int i =0; i<100; i++){
+
+                Team team = new Team();
+                team.setName("team"+i);
+                em.persist(team);
+
+                Member member = new Member();
+                member.setUsername("member"+i);
+                member.setAge(i+1);
+                member.setTeam(team);
+
+                em.persist(member);
+            }
 
             em.flush();
             em.clear();
 
-            // 엔티티 프로젝션
-            List<Member> result = em.createQuery("select m from Member m ", Member.class)
-                    .getResultList(); // 컬렉션 반환
-
-            Member findMember = result.get(0);
-            findMember.setAge(20);
-
-            List<Team> resultTeam = em.createQuery("select m.team, from Member m ", Team.class)
-                    .getResultList();  // 조인 쿼리가 나감 // 쿼리랑 문법이 달라서 권장하지 않음
-
-            //임베디드 타입 프로젝션
-            em.createQuery("select o.address from Order o ", Address.class)  // 소속테이블을 명시해줘야한다.
+            // 페이징 쿼리 // 각각 데이터 베이스의 방언에 맞춰 쿼리가 나간다.
+            List<Member> result = em.createQuery("select m from Member m inner join m.team t")
+                    .setFirstResult(1)
+                    .setMaxResults(10)
                     .getResultList();
 
-            //스칼라 타입 프로젝션
-            em.createQuery("select distinct m.username,m.age from Member m ")
+            System.out.println("result.size = " + result.size());
+            for (Member member1 : result) {
+                System.out.println("member1 = " + member1);
+            }
+
+            // 조인
+            // 내부 조인
+            String innerQuery = "select m from Member m inner join m.team t";
+            List<Member> innerResult = em.createQuery(innerQuery,Member.class)
+                    .getResultList();
+
+            // 외부 조인
+            // outer 생략가능
+            String outerQuery = "select m from Member m left outer join m.team t";
+            List<Member> outerResult = em.createQuery(outerQuery,Member.class)
+                    .getResultList();
+
+            // 세타 조인
+            // cross join 으로 나옴
+            String query = "select m from Member m, Team t where m.username = t.name";
+            List<Member> joinResult = em.createQuery(query,Member.class)
+                    .getResultList();
+
+            System.out.println("joinResult.size() = " + joinResult.size());
+
+            // on절
+            String onQuery = "select m from Member m left join m.team t on t.name = 'team20'";
+            List<Member> onResult = em.createQuery(onQuery,Member.class)
                     .getResultList();
 
 
-            // Object 배열 타입으로 조회 // Object 배열로 반환됨
-            List resultList = em.createQuery("select m.username,m.age from Member m ")
-                    .getResultList();
-
-            Object o = resultList.get(0);
-            Object[] result1 = (Object[]) o;
-            System.out.println("username = " + result1[0]);
-            System.out.println("age = " + result1[1]);
-
-            // new 명령어로 조회
-            List<MemberDTO> resultList1 = em.createQuery("select new jpql.MemberDTO(m.username, m.age)from Member m ",MemberDTO.class)
-                    .getResultList();
-
-            MemberDTO memberDTO = resultList1.get(0);
-            System.out.println("username = " + memberDTO.getUsername());
-            System.out.println("age = " + memberDTO.getAge());
 
 
             tx.commit();

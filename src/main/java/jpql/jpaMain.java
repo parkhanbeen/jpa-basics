@@ -1,6 +1,7 @@
 package jpql;
 
 import javax.persistence.*;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -30,32 +31,28 @@ public class jpaMain {
             em.flush();
             em.clear();
 
-            // JPQL 기본 함수
-            String query = "select 'a' || 'b' from Member m ";   // 하이버네이트에서 지원하는 문법
+            // 경로 표현식
+            // 상태 필드 : 경로의 탐색 끝 탐색X
+            String query = "select m.username from Member m ";
 
-            String concatQuery = "select concat('a', 'b') from Member m "; // concat 데이터베이스 표준 문법
+            // 단일 연관 경로 : 묵시적 내부 조인(inner join)발생 탐색O
+            String query1 = "select m.team.name from Member m ";
 
-            String subQuery = "select substring(m.username, 2, 3) from Member m "; // 2번째 부터 3개를 짤라라
+            // 컬렉션 값 연관 경로 : 묵시적 내부 조인(inner join)발생 탐색X
+            String query2 = "select t.members from Team t ";
 
-            String locateQuery = "select locate('de','abcdefg') from Member m "; // de가 몇번째인지 찾아라
-
-            String sizeQuery = "select size(t.members) from Team t "; // 컬렉션의 크기를 돌려준다
-
-            @OrderColumn
-            String indexQuery = "select index(t.members) from Team t "; // 컬렉션의 위치 값을 구할 때 사용 거의 안쓴다
-
-
-            // 사용자 정의 함수 호출
-            String functionQuery = "select function('grop_concat', m.username) from Member m "; // 직접 함수를 등록하여 사용가능하다
+            // from절에서 명시적인 조인을 통해 별칭을 얻으면 별칭을 통해 탐색 가능
+            String query3 = "select m.username from Team t join t.members m";
 
 
-            List<String> functionList = em.createQuery(functionQuery,String.class)
+            Collection resultList = em.createQuery(query2, Collection.class)
                     .getResultList();
 
-            for (String s : functionList) {
+            for (Object s : resultList) {
                 System.out.println("s = " + s);
 
             }
+
 
             tx.commit();
 

@@ -16,43 +16,89 @@ public class jpaMain {
         tx.begin();
 
         try{
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
+            Team teamA = new Team();
+            teamA.setName("teamA");
+            em.persist(teamA);
 
-            Member member = new Member();
-            member.setUsername("관리자");
-            member.setAge(20);
-            member.setTeam(team);
-            member.setType(MemberType.ADMIN);
+            Team teamB = new Team();
+            teamB.setName("teamB");
+            em.persist(teamB);
 
-            em.persist(member);
+            Member member1 = new Member();
+            member1.setUsername("회원1");
+            member1.setAge(21);
+            member1.setTeam(teamA);
+            em.persist(member1);
+
+            Member member2 = new Member();
+            member2.setUsername("회원2");
+            member2.setAge(23);
+            member2.setTeam(teamA);
+            em.persist(member2);
+
+            Member member3 = new Member();
+            member3.setUsername("회원3");
+            member3.setAge(33);
+            member3.setTeam(teamB);
+            em.persist(member3);
 
             em.flush();
             em.clear();
 
-            // 경로 표현식
-            // 상태 필드 : 경로의 탐색 끝 탐색X
-            String query = "select m.username from Member m ";
+            String query = "select m from Member m ";
 
-            // 단일 연관 경로 : 묵시적 내부 조인(inner join)발생 탐색O
-            String query1 = "select m.team.name from Member m ";
-
-            // 컬렉션 값 연관 경로 : 묵시적 내부 조인(inner join)발생 탐색X
-            String query2 = "select t.members from Team t ";
-
-            // from절에서 명시적인 조인을 통해 별칭을 얻으면 별칭을 통해 탐색 가능
-            String query3 = "select m.username from Team t join t.members m";
-
-
-            Collection resultList = em.createQuery(query2, Collection.class)
+            List<Member> resultList = em.createQuery(query, Member.class)
                     .getResultList();
 
-            for (Object s : resultList) {
-                System.out.println("s = " + s);
-
+            for (Member member : resultList) {
+                System.out.println("Member = " + member.getUsername() + ", " + member.getTeam().getName());
+                //회원1, 팀A(SQL)
+                //회원2, 팀A(1차캐시)
+                //회원3, 팀B(SQL)
             }
 
+            em.flush();
+            em.clear();
+
+            // join fetch
+            // 페치 조인으로 회원과 팀을 함께 조회해서 지연 로딩X
+            // 다대일계 관계
+            String query1 = "select m from Member m join fetch m.team";
+
+            List<Member> resultList1 = em.createQuery(query1, Member.class)
+                    .getResultList();
+
+            for (Member member : resultList1) {
+                System.out.println("Member = " + member.getUsername() + ", " + member.getTeam().getName());
+            }
+
+            // 일대다 관계
+            String query2 = "select t from Team t join fetch t.members";
+
+            List<Team> resultList2 = em.createQuery(query2, Team.class)
+                    .getResultList();
+
+            for (Team team : resultList2) {
+                System.out.println("team = " + team.getName() + ", members = " + team.getMembers().size());
+                for(Member member : team.getMembers()){
+                    System.out.println("-> member = " + member);
+                }
+            }
+
+            // distinct
+            // distinct를 하더라도 sql에서는 데이터가 완전히 똑같아야 중복 제거
+            // JPA에선 같은 식별자를 가진 엔티티를 제거
+            String query3 = "select distinct t from Team t join fetch t.members";
+
+            List<Team> resultList3 = em.createQuery(query3, Team.class)
+                    .getResultList();
+
+            for (Team team : resultList3) {
+                System.out.println("team = " + team.getName() + ", members = " + team.getMembers().size());
+                for(Member member : team.getMembers()){
+                    System.out.println("-> member = " + member);
+                }
+            }
 
             tx.commit();
 

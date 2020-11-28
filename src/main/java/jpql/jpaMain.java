@@ -45,52 +45,15 @@ public class jpaMain {
             em.flush();
             em.clear();
 
-            String query = "select m from Member m ";
-
-            List<Member> resultList = em.createQuery(query, Member.class)
-                    .getResultList();
-
-            for (Member member : resultList) {
-                System.out.println("Member = " + member.getUsername() + ", " + member.getTeam().getName());
-                //회원1, 팀A(SQL)
-                //회원2, 팀A(1차캐시)
-                //회원3, 팀B(SQL)
-            }
-
-            em.flush();
-            em.clear();
-
-            // join fetch
-            // 페치 조인으로 회원과 팀을 함께 조회해서 지연 로딩X
-            // 다대일계 관계
-            String query1 = "select m from Member m join fetch m.team";
-
-            List<Member> resultList1 = em.createQuery(query1, Member.class)
-                    .getResultList();
-
-            for (Member member : resultList1) {
-                System.out.println("Member = " + member.getUsername() + ", " + member.getTeam().getName());
-            }
-
-            // 일대다 관계
-            String query2 = "select t from Team t join fetch t.members";
-
-            List<Team> resultList2 = em.createQuery(query2, Team.class)
-                    .getResultList();
-
-            for (Team team : resultList2) {
-                System.out.println("team = " + team.getName() + ", members = " + team.getMembers().size());
-                for(Member member : team.getMembers()){
-                    System.out.println("-> member = " + member);
-                }
-            }
-
-            // distinct
-            // distinct를 하더라도 sql에서는 데이터가 완전히 똑같아야 중복 제거
-            // JPA에선 같은 식별자를 가진 엔티티를 제거
-            String query3 = "select distinct t from Team t join fetch t.members";
+            // 페치 조인에는 별칭을 줄 수 없다
+            // 컬렉션에 페치 조인을 하면 페이징 API를 사용할 수 없다
+            // BatchSize를 이용하여 해결가능
+            // persistence.xml에 "hibernate.hbm2ddl.default_batch_fetch_size" 프로퍼티를 추가하여 해결
+            String query3 = "select t from Team t";
 
             List<Team> resultList3 = em.createQuery(query3, Team.class)
+                    .setFirstResult(0)
+                    .setMaxResults(2)
                     .getResultList();
 
             for (Team team : resultList3) {

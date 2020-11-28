@@ -45,23 +45,29 @@ public class jpaMain {
             em.flush();
             em.clear();
 
-            // 페치 조인에는 별칭을 줄 수 없다
-            // 컬렉션에 페치 조인을 하면 페이징 API를 사용할 수 없다
-            // BatchSize를 이용하여 해결가능
-            // persistence.xml에 "hibernate.hbm2ddl.default_batch_fetch_size" 프로퍼티를 추가하여 해결
-            String query3 = "select t from Team t";
+            // 엔티티 직접 사용 - 기본 키 값
+            // sql에서 식별자 값을 꺼내서 동작하게됨
+            String query = "select m from Member m where m = :member";
 
-            List<Team> resultList3 = em.createQuery(query3, Team.class)
-                    .setFirstResult(0)
-                    .setMaxResults(2)
+            Member findMember = em.createQuery(query, Member.class)
+                    .setParameter("member",member1)
+                    .getSingleResult();
+
+            System.out.println("findMember = " + findMember);
+
+            // 엔티티 직접 사용 - 외래 키 값
+            // sql에서 식별자 값을 꺼내서 동작하게됨
+            String query1 = "select m from Member m where m.team = :team";
+
+            List<Member> findMember1 = em.createQuery(query1, Member.class)
+                    .setParameter("team",teamA)
                     .getResultList();
 
-            for (Team team : resultList3) {
-                System.out.println("team = " + team.getName() + ", members = " + team.getMembers().size());
-                for(Member member : team.getMembers()){
-                    System.out.println("-> member = " + member);
-                }
+            for (Member member : findMember1) {
+                System.out.println("member = " + member);
             }
+
+
 
             tx.commit();
 

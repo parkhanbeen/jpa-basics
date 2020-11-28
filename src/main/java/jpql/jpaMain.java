@@ -45,15 +45,24 @@ public class jpaMain {
             em.flush();
             em.clear();
 
-            // Named 쿼리 - 어노테이션
-            List<Member> resultList = em.createNamedQuery("Member.findByUsername", Member.class)
-                    .setParameter("username", "회원1")
-                    .getResultList();
+            // 벌크 연산
+            // 벌크 연산은 영속성 컨텍스트를 무시하고 데이터베이스에 직접 쿼리함
+            // flush 자동 호출
+            int resultCount = em.createQuery("update Member m set m.age = 20")
+                    .executeUpdate();
 
-            for (Member member : resultList) {
-                System.out.println("member = " + member);
-            }
+            // 벌크 연산 수행후 영속성 컨텍스트를 초기화
+            em.clear();
 
+            Member findMember1 = em.find(Member.class, member1.getId());
+            Member findMember2 = em.find(Member.class, member2.getId());
+            Member findMember3 = em.find(Member.class, member3.getId());
+
+            System.out.println("resultCount = " + resultCount);
+
+            System.out.println("findMember1 = " + findMember1.getAge());
+            System.out.println("findMember2 = " + findMember2.getAge());
+            System.out.println("findMember3 = " + findMember3.getAge());
 
             tx.commit();
 

@@ -45,28 +45,14 @@ public class jpaMain {
             em.flush();
             em.clear();
 
-            // 엔티티 직접 사용 - 기본 키 값
-            // sql에서 식별자 값을 꺼내서 동작하게됨
-            String query = "select m from Member m where m = :member";
-
-            Member findMember = em.createQuery(query, Member.class)
-                    .setParameter("member",member1)
-                    .getSingleResult();
-
-            System.out.println("findMember = " + findMember);
-
-            // 엔티티 직접 사용 - 외래 키 값
-            // sql에서 식별자 값을 꺼내서 동작하게됨
-            String query1 = "select m from Member m where m.team = :team";
-
-            List<Member> findMember1 = em.createQuery(query1, Member.class)
-                    .setParameter("team",teamA)
+            // Named 쿼리 - 어노테이션
+            List<Member> resultList = em.createNamedQuery("Member.findByUsername", Member.class)
+                    .setParameter("username", "회원1")
                     .getResultList();
 
-            for (Member member : findMember1) {
+            for (Member member : resultList) {
                 System.out.println("member = " + member);
             }
-
 
 
             tx.commit();
